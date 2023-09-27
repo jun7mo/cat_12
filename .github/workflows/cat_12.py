@@ -1,4 +1,52 @@
 
+import os
+import paddle
+from multiprocessing import cpu_count
+import paddle.fluid as fluid
+import matplotlib.pyplot as plt
+
+###########数据预处理################
+train_file_path = './data/train_list.txt'
+data_root_path='./cat_12_train'
+test_file_path = './test.txt'
+import random
+
+# 读取文件中的内容，并写入列表FileNameList
+def ReadFileDatas(original_filename):
+      FileNameList = []
+      file = open(original_filename, 'r+', encoding='utf-8')
+      for line in file:
+            FileNameList.append(line)  # 写入文件内容到列表中去
+      print('数据集总量：', len(FileNameList))
+      file.close()
+      return FileNameList
+
+# listInfo为 ReadFileDatas 的列表
+def WriteDatasToFile(listInfo, new_filename):
+      f = open(new_filename, mode='w', encoding='utf-8')
+      for idx in range(len(listInfo)):
+            str = listInfo[idx]  # 列表指针
+            f.write(str)
+      f.close()
+      print('写入 %s 文件成功.' % new_filename)
+
+listFileInfo = ReadFileDatas('./data/train_list.txt')            # 读取文件
+random.shuffle(listFileInfo)                       # 打乱顺序
+WriteDatasToFile(listFileInfo,'./random_train.txt')       # 保存新的文件
+random_train='./random_train.txt'
+with open(test_file_path, 'w') as f:
+    pass
+with open(random_train, 'r') as f:
+    i = 0
+    for line in f:
+        if i % 10 == 0:
+            with open(test_file_path,'a') as f:
+                f.write(line)
+        i += 1
+
+print('训练集测试集划分完成!!!')
+
+
 #############模型搭建#############
 train_file_path = './random_train.txt'
 data_root_path='./cat_12_train'
