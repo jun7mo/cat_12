@@ -3,13 +3,14 @@ import paddle
 from multiprocessing import cpu_count
 import paddle.fluid as fluid
 import matplotlib.pyplot as plt
-
+import random
+import cv2
 ###########数据预处理################
 train_file_path = './train_list.txt'
 data_root_path='./cat_12_train'
 test_file_path = './test.txt'
-import random
 
+cv2.destroyAllWindows()
 # 读取文件中的内容，并写入列表FileNameList
 def ReadFileDatas(original_filename):
       FileNameList = []
@@ -51,7 +52,7 @@ import paddle
 from multiprocessing import cpu_count
 import paddle.fluid as fluid
 import matplotlib.pyplot as plt
-
+import cv2
 #############模型搭建#############
 train_file_path = './train_list.txt'
 data_root_path = './cat_12_train'
@@ -61,6 +62,7 @@ test_file_path = './test.txt'
 def train_mapper(sample):  # sample为元组
     img_path, label = sample
     # 读取图像数据
+    # try:
     img = paddle.dataset.image.load_image(img_path)
     # 对图片进行预处理，进行缩放，裁剪成相同大小
     # im:图像路径     resize_size:缩放大小  is_color: 是否为彩色  crop_size: 裁剪大小  is_train:训练模式（随机裁剪）   #VGG的resize_size和crop_size为224
@@ -69,13 +71,15 @@ def train_mapper(sample):  # sample为元组
     img = img.astype('float32') / 255.0
     # 返回图像和标签
     return img, label
-
+    # except AttributeError:
+    #     print("图像读取失败，请检查图像路径或名称")
 
 def train_r(train_list, buffer_size=1024):
     def reader():
         with open(train_list, 'r') as f:
             for line in f.readlines():  # 遍历每一行数据   strip()去掉两侧空白符
                 img_path, img_label = line.strip().replace('\n', '').split('\t')  # 去掉换行符并把图像路径和标签拆分成列表
+                # print('划分成功,路径为{},类别为{}'.format(img_path,img_label))
                 yield img_path, int(img_label)  # yield特殊的迭代器，节省内存
         # mapper:处理函数
         # reader: 原始读取函数，将数据传递给train_mapper
@@ -85,6 +89,7 @@ def train_r(train_list, buffer_size=1024):
     return paddle.reader.xmap_readers(
         mapper=train_mapper, reader=reader,
         buffer_size=buffer_size, process_num=cpu_count())
+
 
 
 def test_mapper(sample):  # sample为元组
@@ -111,6 +116,7 @@ def test_r(test_list, buffer_size=1024):
 BATCH_SIZE = 12
 # 训练集
 train_reader = train_r(train_file_path)  # 原始数据
+
 random_train_reader = paddle.reader.shuffle(train_reader, buf_size=500)  # 随机数据读取器
 batch_train_reader = paddle.batch(random_train_reader, batch_size=BATCH_SIZE)  # 批量数据读取器
 # 测试集
